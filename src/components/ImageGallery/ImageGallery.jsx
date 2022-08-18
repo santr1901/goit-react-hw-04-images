@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-// import axios from 'axios';
+import { useState, useEffect } from 'react';
 
 import css from './ImageGallery.module.css';
 
@@ -9,64 +8,46 @@ import Error from './Error/Error';
 import LoadMoreBtn from 'components/Button/Button';
 import { getImages } from 'services';
 
-class ImageGallery extends Component {
-  state = {
-    images: [],
-    loading: false,
-    error: null,
-  };
+const ImageGallery = ({ searchName, page, onImgClick, onLoadMore }) => {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  componentDidUpdate(prevProps) {
-    const prevSearchName = prevProps.searchName;
-    const searchName = this.props.searchName;
-    const prevPage = prevProps.page;
-    const realPage = this.props.page;
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    console.log(page);
+    getImages(searchName, page)
+      .then(response => {
+        let allData = response.map(image => ({
+          id: image.id,
+          webImg: image.webformatURL,
+          largeImg: image.largeImageURL,
+        }));
+        if (response.length === 0) {
+          setError(true);
+          return;
+        }
 
-    if (prevSearchName !== searchName || prevPage !== realPage) {
-      this.setState({ loading: true, error: false });
-      if (prevSearchName !== searchName) {
-        this.setState({ images: [] });
-      }
+        setImages(page === 1 ? [...allData] : [...images, ...allData]);
+      })
+      .catch(error => setError({ error }))
+      .finally(setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchName]);
 
-      getImages(searchName, realPage)
-        .then(response => {
-          let allData = response.map(image => ({
-            id: image.id,
-            webImg: image.webformatURL,
-            largeImg: image.largeImageURL,
-          }));
-          if (response.length === 0) {
-            this.setState({ error: true });
-            return;
-          }
-          console.log(response);
-          this.setState(prevState => ({
-            images: [...prevState.images, ...allData],
-          }));
-        })
-        .catch(error => this.setState({ error }))
-        .finally(this.setState({ loading: false }));
-    }
-  }
+  return (
+    <div>
+      {error && <Error searchName={searchName} />}
 
-  render() {
-    const { images, loading, error } = this.state;
-    return (
-      <div>
-        {error && <Error searchName={this.props.searchName} />}
-        {loading && <Loader />}
-        <ul className={css.ImageGallery}>
-          <ImageGalleryItem
-            images={images}
-            onImgClick={this.props.onImgClick}
-          />
-        </ul>
-        {images.length !== 0 && (
-          <LoadMoreBtn onLoadMore={this.props.onLoadMore} />
-        )}
-      </div>
-    );
-  }
-}
+      <ul className={css.ImageGallery}>
+        <ImageGalleryItem images={images} onImgClick={onImgClick} />
+      </ul>
+
+      {images.length !== 0 && <LoadMoreBtn onLoadMore={onLoadMore} />}
+      {loading && <Loader />}
+    </div>
+  );
+};
 
 export default ImageGallery;

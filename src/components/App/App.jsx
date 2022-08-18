@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState } from 'react';
 
 import Searchbar from 'components/Searchbar/Searchbar';
 import ImageGallery from 'components/ImageGallery/ImageGallery';
@@ -6,57 +6,50 @@ import Modal from 'components/Modal/Modal';
 
 import css from './App.module.css';
 
-class App extends Component {
-  state = {
-    searchName: '',
-    page: 1,
-    showModal: false,
-    largeImg: '',
+const App = () => {
+  const [searchName, setSearchName] = useState('');
+  const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImg, setLargeImg] = useState('');
+
+  const handleFormSubmit = searchName => {
+    setSearchName(searchName);
+    setPage(1);
+    // this.setState({ searchName, page: 1 });
   };
 
-  handleFormSubmit = searchName => {
-    this.setState({ searchName, page: 1 });
+  const loadMore = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const toggleModal = () => {
+    setShowModal(!showModal);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
+  const onImgModal = imgForModal => {
+    toggleModal();
+    setLargeImg(imgForModal);
   };
 
-  onImgModal = imgForModal => {
-    this.toggleModal();
-    this.setState({ largeImg: imgForModal });
-  };
-
-  render() {
-    const { searchName, page, showModal, largeImg } = this.state;
-    return (
-      <div className={css.app}>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-
+  return (
+    <div className={css.app}>
+      <Searchbar onSubmit={handleFormSubmit} />
+      {searchName && (
         <ImageGallery
           searchName={searchName}
           page={page}
-          onLoadMore={this.loadMore}
-          onImgClick={this.onImgModal}
+          onLoadMore={loadMore}
+          onImgClick={onImgModal}
         />
+      )}
 
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img
-              width={600}
-              height={500}
-              src={largeImg}
-              alt="Something modal"
-            />
-          </Modal>
-        )}
-      </div>
-    );
-  }
-}
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          <img width={600} height={500} src={largeImg} alt="Something modal" />
+        </Modal>
+      )}
+    </div>
+  );
+};
 
 export default App;
